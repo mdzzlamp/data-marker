@@ -1,0 +1,3 @@
+WINDOW_H = 400
+WINDOW_W = 650
+WINDOW_TITLE = 'Data Marker'
