@@ -68,7 +68,6 @@ class JointsCoordinateTable(QTableWidget):
     def add_coordinate(self, x, y):
         if self.currentActiveRow == self.rowCount():
             return
-        print('add coordinate({0},{1}) to row({2})'.format(x, y, self.currentActiveRow))
         self.setItem(self.currentActiveRow, 0, QTableWidgetItem(str(x)))
         self.setItem(self.currentActiveRow, 1, QTableWidgetItem(str(y)))
         self.currentActiveRow += 1
@@ -113,15 +112,32 @@ class JointsHover(QLabel):
         self.image_clicked.emit(event.pos().x(), event.pos().y())
 
     def paintEvent(self, QPaintEvent):
-        print('painting...')
         super(JointsHover, self).paintEvent(QPaintEvent)
+        joints_cnt = len(self.joints)
         painter = QPainter(self)
 
         pen = QPen(QColor(125, 125, 125))
         pen.setWidth(8)
         painter.setPen(pen)
-        if len(self.joints) >= 2:
+        if joints_cnt >= 2:
             painter.drawLine(self.joints[0][0], self.joints[0][1], self.joints[1][0], self.joints[1][1])
+        if joints_cnt >= 3:
+            painter.drawLine((self.joints[0][0] + self.joints[1][0]) // 2, (self.joints[0][1] + self.joints[1][1]) // 2,
+                             self.joints[2][0], self.joints[2][1])
+        if joints_cnt >= 4:
+            painter.drawLine(self.joints[2][0], self.joints[2][1], self.joints[3][0], self.joints[3][1])
+        if joints_cnt >= 5:
+            painter.drawLine(self.joints[2][0], self.joints[2][1], self.joints[4][0], self.joints[4][1])
+        if joints_cnt >= 6:
+            painter.drawLine(self.joints[2][0], self.joints[2][1], self.joints[5][0], self.joints[5][1])
+        if joints_cnt >= 7:
+            painter.drawLine(self.joints[4][0], self.joints[4][1], self.joints[6][0], self.joints[6][1])
+        if joints_cnt >= 8:
+            painter.drawLine(self.joints[5][0], self.joints[5][1], self.joints[7][0], self.joints[7][1])
+        if joints_cnt >= 9:
+            painter.drawLine(self.joints[6][0], self.joints[6][1], self.joints[8][0], self.joints[8][1])
+        if joints_cnt >= 10:
+            painter.drawLine(self.joints[7][0], self.joints[7][1], self.joints[9][0], self.joints[9][1])
 
         pen = QPen(QColor(255, 0, 0))
         pen.setWidth(15)
@@ -133,6 +149,5 @@ class JointsHover(QLabel):
 
     @pyqtSlot(list, name='show_joints')
     def show_joints(self, joints):
-        print('show_joints')
         self.joints = joints
         self.repaint()
