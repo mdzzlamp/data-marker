@@ -1,6 +1,6 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor
-from PyQt5.QtWidgets import QLabel, QTableWidgetItem, QTableWidget, QAbstractItemView
+from PyQt5.QtWidgets import QLabel, QTableWidgetItem, QTableWidget, QAbstractItemView, QComboBox
 
 from config import WINDOW_H
 
@@ -19,6 +19,9 @@ class ClickImageView(QLabel):
         self.image_clicked.connect(joints_table.add_coordinate)
         self.image_changed.connect(joints_table.clearContents)
 
+    def connect_to_box(self, box):
+        self.image_changed.connect(box.reset)
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.image_clicked.emit(event.pos().x(), event.pos().y())
@@ -34,8 +37,8 @@ class ClickImageView(QLabel):
 
 
 class JointsCoordinateTable(QTableWidget):
-    table_filled = pyqtSignal(bool, name='table_filled')
-    table_cleared = pyqtSignal(bool, name='table_cleared')
+    table_filled = pyqtSignal(name='table_filled')
+    table_cleared = pyqtSignal(name='table_cleared')
     coordinate_changed = pyqtSignal(list, name='coordinate_added')
 
     def __init__(self, *__args):
@@ -57,16 +60,16 @@ class JointsCoordinateTable(QTableWidget):
         for row in range(self.rowCount()):
             self.setRowHeight(row, 20)
 
-    def connect_to_button(self, confirm_button):
-        self.table_filled.connect(confirm_button.setEnabled)
-        self.table_cleared.connect(confirm_button.setEnabled)
+    def connect_to_window(self, window):
+        self.table_filled.connect(window.enable_confirm_button)
+        self.table_cleared.connect(window.disable_confirm_button)
 
     def connect_to_hover(self, hover):
         self.coordinate_changed.connect(hover.show_joints)
 
     @pyqtSlot(int, int, name='add_coordinate')
     def add_coordinate(self, x, y):
-        if self.currentActiveRow == self.rowCount():
+        if self.filled():
             return
         self.setItem(self.currentActiveRow, 0, QTableWidgetItem(str(x)))
         self.setItem(self.currentActiveRow, 1, QTableWidgetItem(str(y)))
@@ -75,8 +78,11 @@ class JointsCoordinateTable(QTableWidget):
         self.joints.append((x, y))
         self.coordinate_changed.emit(self.joints)
 
-        if self.currentActiveRow == self.rowCount():
-            self.table_filled.emit(True)
+        if self.filled():
+            self.table_filled.emit()
+
+    def filled(self):
+        return self.currentActiveRow == self.rowCount()
 
     @pyqtSlot(name='clear_contents')
     def clearContents(self):
@@ -85,7 +91,7 @@ class JointsCoordinateTable(QTableWidget):
         self.selectRow(self.currentActiveRow)
         self.joints.clear()
         self.coordinate_changed.emit(self.joints)
-        self.table_cleared.emit(False)
+        self.table_cleared.emit()
 
 
 class JointsHover(QLabel):
@@ -151,3 +157,29 @@ class JointsHover(QLabel):
     def show_joints(self, joints):
         self.joints = joints
         self.repaint()
+
+
+class CategoryComboBox(QComboBox):
+    on_chosen = pyqtSignal(name='on_chosen')
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.init_ui()
+        self.currentIndexChanged.connect(self.on_changed)
+
+    def init_ui(self):
+        self.addItems(['正确坐姿', '趴写', '左手托腮', '右手托腮', '头往左斜', '头往右斜', '驼背', '含笔'])
+
+    def connect_to_window(self, window):
+        self.on_chosen.connect(window.enable_confirm_button)
+
+    def on_changed(self):
+        if self.is_chosen():
+            self.on_chosen.emit()
+
+    @pyqtSlot(name='reset')
+    def reset(self):
+        self.setCurrentIndex(-1)    # choose nothing initially
+
+    def is_chosen(self):
+        return self.currentIndex() != -1
