@@ -4,7 +4,7 @@ import sys
 
 from PyQt5.QtCore import QSize, pyqtSlot
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit, QMessageBox
 
 from config import *
 from data import DataManager
@@ -34,12 +34,17 @@ class MainWindow(QWidget):
         if QKeyEvent.key() == 16777220:  # Key-Enter
             self.confirmButton.click()
 
+    @pyqtSlot(name='exit')
+    def exit(self):
+        self.close()
+
     def init_ui(self, size, title):
         self.setFixedSize(size)
         self.setWindowTitle(title)
 
         self.img_view.connect_to_table(self.joints_table)
         self.img_view.connect_to_box(self.category_box)
+        self.img_view.connect_to_window(self)
         self.joints_table.connect_to_window(self)
         self.joints_table.connect_to_hover(self.joints_hover)
         self.category_box.connect_to_window(self)
@@ -53,7 +58,8 @@ class MainWindow(QWidget):
         self.rewriteButton.clicked.connect(self.category_box.reset)
         self.confirmButton.setText('Confirm')
         self.confirmButton.setStyleSheet('background-color: green')
-        self.confirmButton.clicked.connect(self.img_view.next_image)
+        # self.confirmButton.clicked.connect(self.img_view.next_image)
+        self.confirmButton.clicked.connect(self.save_sample)
 
         self.hint.setText('*L/R refers to the image.')
         self.hint.setStyleSheet('font-size: 8pt')
@@ -75,13 +81,19 @@ class MainWindow(QWidget):
 
     @pyqtSlot(name='enable_confirm_button')
     def enable_confirm_button(self):
-        print('try enable confirm button')
         if self.joints_table.filled() and self.category_box.is_chosen():
             self.confirmButton.setEnabled(True)
 
     @pyqtSlot(name='disable_confirm_button')
     def disable_confirm_button(self):
         self.confirmButton.setEnabled(False)
+
+    @pyqtSlot(name='save_sample')
+    def save_sample(self):
+        DataManager().save_sample(self.img_view.current_image,
+                                  sum(self.joints_table.joints, []),
+                                  self.category_box.currentIndex())
+        self.img_view.next_image()
 
 
 if __name__ == '__main__':

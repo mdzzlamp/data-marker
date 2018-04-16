@@ -1,15 +1,17 @@
 from PyQt5.QtCore import pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor
-from PyQt5.QtWidgets import QLabel, QTableWidgetItem, QTableWidget, QAbstractItemView, QComboBox
+from PyQt5.QtWidgets import QLabel, QTableWidgetItem, QTableWidget, QAbstractItemView, QComboBox, QMessageBox
 
 from config import WINDOW_H
 from data import DataManager
 
 
 class ClickImageView(QLabel):
+    current_image: str
     painter: QPainter
     image_clicked = pyqtSignal(int, int, name='image_clicked')
     image_changed = pyqtSignal(name='image_changed')
+    image_ended = pyqtSignal(name='image_ended')
 
     def __init__(self, *__args):
         super().__init__(*__args)
@@ -23,17 +25,25 @@ class ClickImageView(QLabel):
     def connect_to_box(self, box):
         self.image_changed.connect(box.reset)
 
+    def connect_to_window(self, window):
+        self.image_ended.connect(window.exit)
+
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         self.image_clicked.emit(event.pos().x(), event.pos().y())
 
     def change_image(self, path):
+        self.current_image = path
         img = QPixmap(path).scaled(WINDOW_H, WINDOW_H)
         self.setPixmap(img)
         self.image_changed.emit()
 
     def next_image(self):
-        self.change_image(DataManager().next_img())
+        try:
+            self.change_image(DataManager().next_img())
+        except StopIteration:
+            QMessageBox.question(self, '', 'All job done.', QMessageBox.Yes)
+            self.image_ended.emit()
 
 
 class JointsCoordinateTable(QTableWidget):
@@ -51,7 +61,7 @@ class JointsCoordinateTable(QTableWidget):
         self.setAlternatingRowColors(True)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setHorizontalHeaderLabels(['x', 'y'])
-        self.setVerticalHeaderLabels(['Eye L', 'Eye R', 'Neck', 'chest',
+        self.setVerticalHeaderLabels(['Eye L', 'Eye R', 'Neck', 'Chest',
                                       'Shoulder L', 'Shoulder R',
                                       'Elbow L', 'Elbow R',
                                       'Hand L', 'Hand R'])
@@ -75,7 +85,7 @@ class JointsCoordinateTable(QTableWidget):
         self.setItem(self.currentActiveRow, 1, QTableWidgetItem(str(y)))
         self.currentActiveRow += 1
         self.selectRow(self.currentActiveRow)
-        self.joints.append((x, y))
+        self.joints.append([x, y])
         self.coordinate_changed.emit(self.joints)
 
         if self.filled():

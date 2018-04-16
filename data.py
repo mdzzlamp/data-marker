@@ -14,25 +14,34 @@ class Singleton(type):
 class DataManager(metaclass=Singleton):
     def __init__(self, directory='./dataset'):
         self.dataset_path = directory
-        self.check_csv_existence()
-
         self.image_loader = self.loads()
-        #
-        # self.writer = csv.writer()
-        # self.reader = csv.reader()
+        self.csv_file = open(self.csv_path(), 'a', newline='')
+        self.csv_writer = csv.writer(self.csv_file)
 
     def loads(self):
-        for x in os.listdir(os.path.join(self.dataset_path, 'images')):
-            yield os.path.abspath(os.path.join(self.dataset_path, 'images', x))
+        unmarked_dir_path = os.path.join(self.dataset_path, 'unmarked')
+        for x in os.listdir(unmarked_dir_path):
+            yield os.path.abspath(os.path.join(unmarked_dir_path, x))
+
+    def close(self):
+        self.csv_file.close()
 
     def next_img(self):
         return next(self.image_loader)
 
-    def check_csv_existence(self):
+    def csv_path(self):
         csv_path = os.path.join(self.dataset_path, 'data.csv')
         if not os.path.isfile(csv_path):
             os.system('touch {0}'.format(csv_path))
+        return csv_path
 
-    def save_sample(self, img, coordinates, category_id):
-        filename = os.path.basename(img)
+    def marked_dir(self):
+        marked_dir_path = os.path.join(self.dataset_path, 'marked')
+        if not os.path.isdir(marked_dir_path):
+            os.system('mkdir {0}'.format(marked_dir_path))
+        return marked_dir_path
 
+    def save_sample(self, img_path, coordinates, category_id):
+        filename = os.path.basename(img_path).split('.')[0]
+        self.csv_writer.writerow([filename] + coordinates + [category_id])
+        os.system('mv {0} {1}'.format(img_path, self.marked_dir()))
