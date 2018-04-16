@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QTextEdit
 
 from config import *
+from data import DataManager
 from widgets import JointsCoordinateTable, ClickImageView, JointsHover, CategoryComboBox
 
 
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     window = MainWindow(size=QSize(WINDOW_W, WINDOW_H), title=WINDOW_TITLE)
-    window.img_view.change_image('data/test01.jpg')
+    window.img_view.change_image(next(DataManager().image_loader))
     window.show()
 
     app.exec_()

@@ -3,6 +3,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen, QColor
 from PyQt5.QtWidgets import QLabel, QTableWidgetItem, QTableWidget, QAbstractItemView, QComboBox
 
 from config import WINDOW_H
+from data import DataManager
 
 
 class ClickImageView(QLabel):
@@ -32,8 +33,7 @@ class ClickImageView(QLabel):
         self.image_changed.emit()
 
     def next_image(self):
-        # TODO implement data loader
-        self.change_image('./data/test02.jpg')
+        self.change_image(DataManager().next_img())
 
 
 class JointsCoordinateTable(QTableWidget):
@@ -179,7 +179,7 @@ class CategoryComboBox(QComboBox):
 
     @pyqtSlot(name='reset')
     def reset(self):
-        self.setCurrentIndex(-1)    # choose nothing initially
+        self.setCurrentIndex(-1)  # choose nothing initially
 
     def is_chosen(self):
         return self.currentIndex() != -1
