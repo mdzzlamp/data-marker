@@ -31,17 +31,15 @@ class DataManager(metaclass=Singleton):
 
     def csv_path(self):
         csv_path = os.path.join(self.dataset_path, 'data.csv')
-        if not os.path.isfile(csv_path):
-            os.system('touch {0}'.format(csv_path))
         return csv_path
 
     def marked_dir(self):
         marked_dir_path = os.path.join(self.dataset_path, 'marked')
         if not os.path.isdir(marked_dir_path):
-            os.system('mkdir {0}'.format(marked_dir_path))
+            os.mkdir(marked_dir_path)
         return marked_dir_path
 
     def save_sample(self, img_path, coordinates, category_id):
-        filename = os.path.basename(img_path).split('.')[0]
-        self.csv_writer.writerow([filename] + coordinates + [category_id])
-        os.system('mv {0} {1}'.format(img_path, self.marked_dir()))
+        filename = os.path.basename(img_path)
+        self.csv_writer.writerow([filename.split('.')[0]] + coordinates + [category_id])
+        os.rename(img_path, os.path.join(self.marked_dir(), filename))
