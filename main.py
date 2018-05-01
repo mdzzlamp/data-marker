@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import sys
+import os
 
 from PyQt5.QtCore import QSize, pyqtSlot
 from PyQt5.QtGui import QIcon
@@ -10,6 +11,7 @@ from config import *
 from data import DataManager
 from widgets import JointsCoordinateTable, ClickImageView, JointsHover, CategoryComboBox
 
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = '1'
 
 class MainWindow(QWidget):
     def __init__(self, size, title, *args, **kwargs):
